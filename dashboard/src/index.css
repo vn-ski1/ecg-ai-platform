@@ -1,0 +1,115 @@
+* {
+  box-sizing: border-box;
+}
+
+/* ── LIGHT MODE (default) ────────────────────────────────────────── */
+:root {
+  --color-primary: #0d4f5c;
+  --color-primary-light: #1a7a8c;
+  --color-primary-dark: #073640;
+
+  --color-accent: #10b981;
+  --color-accent-dark: #059669;
+
+  --color-risk-high: #e63946;
+  --color-risk-moderate: #f59e0b;
+  --color-risk-low: #10b981;
+  --color-risk-none: #94a3b8;
+
+  --color-bg: #fafaf7;
+  --color-bg-card: #ffffff;
+  --color-bg-subtle: #f1f5f9;
+
+  --color-text: #0f172a;
+  --color-text-muted: #64748b;
+  --color-text-light: #94a3b8;
+
+  --color-border: #e2e8f0;
+  --color-border-light: #f1f5f9;
+
+  --color-white: #ffffff;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04);
+  --shadow-lg: 0 10px 30px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04);
+}
+
+/* ── DARK MODE ──────────────────────────────────────────────────── */
+[data-theme="dark"] {
+  --color-primary: #22c5d6;
+  --color-primary-light: #67e2ee;
+  --color-primary-dark: #0d4f5c;
+
+  --color-accent: #10b981;
+  --color-accent-dark: #059669;
+
+  --color-risk-high: #ef4444;
+  --color-risk-moderate: #fbbf24;
+  --color-risk-low: #34d399;
+  --color-risk-none: #64748b;
+
+  --color-bg: #0a1218;
+  --color-bg-card: #111d27;
+  --color-bg-subtle: #1a2a36;
+
+  --color-text: #f1f5f9;
+  --color-text-muted: #94a3b8;
+  --color-text-light: #64748b;
+
+  --color-border: #1e2e3a;
+  --color-border-light: #15222d;
+
+  /* Shadows are softer/different in dark mode */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+  --shadow-lg: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-feature-settings: "ss01" 1, "cv02" 1, "cv03" 1, "cv04" 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+}
+
+.tabular-nums {
+  font-feature-settings: "tnum" 1, "lnum" 1;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+*:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.fade-in {
+  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+}
