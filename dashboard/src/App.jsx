@@ -20,6 +20,21 @@ function setupAxiosAuth(token) {
   }
 }
 setupAxiosAuth(localStorage.getItem('ecg_token'));
+// Global interceptor: auto-logout on expired/invalid tokens
+axios.interceptors.response.use(
+  response => response,
+  error => {
+    if (error.response?.status === 401 && error.response?.data?.error?.includes('expired')) {
+      // Clear all auth state and redirect to login
+      localStorage.removeItem('ecg_token');
+      localStorage.removeItem('ecg_doctor');
+      localStorage.removeItem('ecg_patient_token');
+      localStorage.removeItem('ecg_patient');
+      window.location.href = '/';
+    }
+    return Promise.reject(error);
+  }
+);
 
 function NavItem({ to, children }) {
   const location = useLocation();
