@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import { useTranslation } from 'react-i18next';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { colors, shadows, radius, transitions, riskColor } from '../theme';
 
 const API = 'http://localhost:3000/api/v1';
 
 export default function PatientHome() {
+  const { t } = useTranslation();
   const [data, setData] = useState(null);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -27,8 +29,8 @@ export default function PatientHome() {
       });
   }, []);
 
-  if (loading) return <p style={{ padding: 32, color: colors.textMuted }}>Loading your data...</p>;
-  if (error) return <p style={{ padding: 32, color: colors.risk.HIGH }}>Error: {error}</p>;
+  if (loading) return <p style={{ padding: 32, color: colors.textMuted }}>{t('patient_home.loading')}</p>;
+  if (error) return <p style={{ padding: 32, color: colors.risk.HIGH }}>{t('patient_home.error')}{error}</p>;
   if (!data) return null;
 
   const { patient, ecg_records, alerts } = data;
@@ -53,7 +55,7 @@ export default function PatientHome() {
       <div style={card}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
           <div>
-            <h2 style={{ margin: 0, color: colors.accentDark }}>Hello, {patient.name}</h2>
+            <h2 style={{ margin: 0, color: colors.accentDark }}>{t('patient_home.hello')} {patient.name}</h2>
             <p style={{ marginTop: 6, color: colors.textMuted, fontSize: 14 }}>
               {patient.email} {patient.phone ? `· ${patient.phone}` : ''}
             </p>
@@ -61,7 +63,7 @@ export default function PatientHome() {
           {latest && (
             <div style={{ textAlign: 'right' }}>
               <div style={{ fontSize: 11, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600 }}>
-                Current CVD Risk
+                {t('patient_home.current_risk')}
               </div>
               <span style={{
                 display: 'inline-block', marginTop: 8,
@@ -76,10 +78,10 @@ export default function PatientHome() {
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginTop: 24, fontSize: 14 }}>
-          <Info label="Date of Birth" value={patient.date_of_birth ? new Date(patient.date_of_birth).toLocaleDateString() : '—'} />
-          <Info label="Hospital" value={patient.hospital_name || '—'} />
-          <Info label="Assigned Doctor" value={patient.doctor_name || '—'} sub={patient.doctor_specialty} />
-          <Info label="Total ECG Analyses" value={ecg_records.length} />
+          <Info label={t('patient_home.dob')} value={patient.date_of_birth ? new Date(patient.date_of_birth).toLocaleDateString() : '—'} />
+          <Info label={t('patient_home.hospital')} value={patient.hospital_name || '—'} />
+          <Info label={t('patient_home.assigned_doctor')} value={patient.doctor_name || '—'} sub={patient.doctor_specialty} />
+          <Info label={t('patient_home.total_ecgs')} value={ecg_records.length} />
         </div>
       </div>
 
@@ -92,7 +94,7 @@ export default function PatientHome() {
           borderRadius: radius.md,
           marginTop: 24,
         }}>
-          <h3 style={{ margin: 0, color: colors.risk.HIGH }}>⚠ Active Alerts ({pendingAlerts.length})</h3>
+          <h3 style={{ margin: 0, color: colors.risk.HIGH }}>⚠ {t('patient_home.active_alerts')} ({pendingAlerts.length})</h3>
           {pendingAlerts.map(a => (
             <div key={a.alert_id} style={{
               marginTop: 12, padding: 12,
@@ -102,7 +104,7 @@ export default function PatientHome() {
             }}>
               <div style={{ fontSize: 14, color: colors.text }}>{a.message}</div>
               <div style={{ fontSize: 12, color: colors.textMuted, marginTop: 4 }}>
-                {new Date(a.created_at).toLocaleString()} · Your doctor has been notified by SMS.
+                {new Date(a.created_at).toLocaleString()} · {t('patient_home.doctor_notified')}
               </div>
             </div>
           ))}
@@ -111,10 +113,10 @@ export default function PatientHome() {
 
       {/* ECG records & waveform */}
       <div style={{ marginTop: 24 }}>
-        <h3 style={{ color: colors.text }}>Your ECG Analyses</h3>
+        <h3 style={{ color: colors.text }}>{t('patient_home.your_analyses')}</h3>
         {ecg_records.length === 0 ? (
           <div style={{ ...card, textAlign: 'center', color: colors.textMuted }}>
-            No ECG records yet. ECG monitoring will begin during your next hospital visit.
+            {t('patient_home.no_records')}
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 16 }}>
@@ -144,18 +146,18 @@ export default function PatientHome() {
             {selectedRecord && (
               <div>
                 <div style={card}>
-                  <h4 style={{ marginTop: 0, color: colors.text }}>Analysis — Record #{selectedRecord.record_id}</h4>
+                  <h4 style={{ marginTop: 0, color: colors.text }}>{t('patient_home.analysis')} #{selectedRecord.record_id}</h4>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, fontSize: 14 }}>
-                    <Info label="Rhythm" value={selectedRecord.rhythm_class}
-                      sub={`Confidence: ${(selectedRecord.confidence * 100).toFixed(1)}%`} />
-                    <Info label="Heart Rate" value={`${Math.round(selectedRecord.bpm || 0)} BPM`} />
-                    <Info label="CVD Risk Score" value={`${selectedRecord.cvd_risk_score}/100`}
+                    <Info label={t('patient_home.rhythm')} value={selectedRecord.rhythm_class}
+                      sub={`${t('patient_home.confidence')} ${(selectedRecord.confidence * 100).toFixed(1)}%`} />
+                    <Info label={t('patient_home.heart_rate')} value={`${Math.round(selectedRecord.bpm || 0)} BPM`} />
+                    <Info label={t('patient_home.cvd_score')} value={`${selectedRecord.cvd_risk_score}/100`}
                       sub={selectedRecord.cvd_risk_category} />
                   </div>
                 </div>
 
                 <div style={{ ...card, marginTop: 16 }}>
-                  <h4 style={{ marginTop: 0, color: colors.text }}>ECG Waveform</h4>
+                  <h4 style={{ marginTop: 0, color: colors.text }}>{t('patient_home.ecg_waveform')}</h4>
                   <ResponsiveContainer width="100%" height={220}>
                     <LineChart data={waveformData}>
                       <CartesianGrid strokeDasharray="3 3" stroke={colors.border} />

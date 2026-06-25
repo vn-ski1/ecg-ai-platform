@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { useTranslation } from 'react-i18next';
 import { colors, shadows, radius, transitions, riskColor } from '../theme';
 
 const API = 'http://localhost:3000/api/v1/ecg';
 
 export default function Alerts() {
+  const { t } = useTranslation();
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -13,24 +15,34 @@ export default function Alerts() {
 
   const fetchAlerts = () => {
     setLoading(true);
-    axios.get(`${API}/alerts`)
+    const token = localStorage.getItem('ecg_token');
+    axios.get(`${API}/alerts`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
       .then(res => { setAlerts(res.data.alerts); setLoading(false); })
-      .catch(err => { setError(err.message); setLoading(false); });
+      .catch(err => { 
+        console.error('API Error:', err);
+        setError(err.response?.data?.error || err.message); 
+        setLoading(false); 
+      });
   };
 
   useEffect(() => { fetchAlerts(); }, []);
 
   const acknowledgeAlert = async (alertId) => {
     try {
-      await axios.patch(`${API}/alerts/${alertId}/acknowledge`);
+      const token = localStorage.getItem('ecg_token');
+      await axios.patch(`${API}/alerts/${alertId}/acknowledge`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       fetchAlerts();
     } catch (err) {
       alert('Failed to acknowledge: ' + err.message);
     }
   };
 
-  if (loading) return <p style={{ color: colors.textMuted }}>Loading alerts...</p>;
-  if (error) return <p style={{ color: colors.risk.HIGH }}>Error: {error}</p>;
+  if (loading) return <p style={{ color: colors.textMuted }}>{t('alerts.loading')}</p>;
+  if (error) return <p style={{ color: colors.risk.HIGH }}>{t('alerts.error')}{error}</p>;
 
   const filtered = filter === 'ALL' ? alerts : alerts.filter(a => a.status === filter);
   const pendingCount = alerts.filter(a => a.status === 'Pending Resolution').length;
@@ -40,17 +52,17 @@ export default function Alerts() {
     <div className="fade-in">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         <h2 style={{ margin: 0, color: colors.text }}>
-          Alerts <span style={{ color: colors.risk.HIGH }}>({pendingCount} pending)</span>
+          {t('alerts.title')} <span style={{ color: colors.risk.HIGH }}>({pendingCount} {t('alerts.pending')})</span>
         </h2>
         <div style={{ display: 'flex', gap: 8 }}>
           <FilterButton active={filter === 'ALL'} onClick={() => setFilter('ALL')}>
-            All ({alerts.length})
+            {t('alerts.filter_all')} ({alerts.length})
           </FilterButton>
           <FilterButton active={filter === 'Pending Resolution'} onClick={() => setFilter('Pending Resolution')}>
-            Pending ({pendingCount})
+            {t('alerts.filter_pending')} ({pendingCount})
           </FilterButton>
           <FilterButton active={filter === 'Resolved'} onClick={() => setFilter('Resolved')}>
-            Resolved ({resolvedCount})
+            {t('alerts.filter_resolved')} ({resolvedCount})
           </FilterButton>
         </div>
       </div>
@@ -61,7 +73,7 @@ export default function Alerts() {
           color: colors.textMuted, borderRadius: radius.lg,
           border: `1px solid ${colors.borderLight}`,
         }}>
-          No alerts in this category.
+          {t('alerts.no_alerts')}
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -79,16 +91,16 @@ export default function Alerts() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
                 <div>
                   <div style={{ fontSize: 16, fontWeight: 600, color: colors.text }}>
-                    {a.patient_name || 'Unknown patient'}
+                    {a.patient_name || t('alerts.unknown_patient')}
                   </div>
                   <div style={{ fontSize: 13, color: colors.textMuted, marginTop: 4 }}>
-                    Rhythm: <strong style={{ color: colors.text }}>{a.rhythm_class}</strong> ·
-                    Risk score: <strong style={{ color: colors.text }}> {a.risk_score}/100</strong> ·
-                    Doctor: {a.doctor_name || '—'}
+                    {t('alerts.rhythm')} <strong style={{ color: colors.text }}>{a.rhythm_class}</strong> ·
+                    {t('alerts.risk_score')} <strong style={{ color: colors.text }}> {a.risk_score}/100</strong> ·
+                    {t('alerts.doctor')} {a.doctor_name || '—'}
                   </div>
                   <div style={{ fontSize: 12, color: colors.textLight, marginTop: 4 }}>
                     {new Date(a.created_at).toLocaleString()}
-                    {a.resolved_at && ` · Resolved ${new Date(a.resolved_at).toLocaleString()}`}
+                    {a.resolved_at && ` · ${t('alerts.resolved_at')} ${new Date(a.resolved_at).toLocaleString()}`}
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -110,7 +122,7 @@ export default function Alerts() {
                   <Link to={`/patients/${a.patient_id}`} style={{
                     background: colors.primary, color: '#fff', textDecoration: 'none',
                     padding: '6px 12px', borderRadius: radius.sm, fontSize: 13,
-                  }}>View Patient</Link>
+                  }}>{t('alerts.view_patient')}</Link>
                   {a.status !== 'Resolved' && (
                     <button onClick={() => acknowledgeAlert(a.alert_id)} style={{
                       background: colors.risk.LOW, color: '#fff',
@@ -118,7 +130,7 @@ export default function Alerts() {
                       borderRadius: radius.sm, fontSize: 13, cursor: 'pointer',
                       fontWeight: 600,
                     }}>
-                      Acknowledge
+                      {t('alerts.acknowledge')}
                     </button>
                   )}
                 </div>

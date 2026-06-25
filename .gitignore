@@ -35,3 +35,6 @@ Thumbs.db
 
 # psql temp files
 *.tmp
+# Test artifacts (PDFs generated during dev testing)
+test-report.pdf
+ai-service/test-report.pdf

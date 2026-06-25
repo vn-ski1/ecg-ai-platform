@@ -1,9 +1,10 @@
 // Auto-ECG assignment service
-// When a patient signs up, generates 2-3 realistic ECG analyses by running
-// synthetic waveforms through the real AI service.
+// When a patient signs up, generates 1-3 realistic ECG analyses by running
+// synthetic waveforms through the real AI service. Sends a diagnostic email
+// per result and notifies all doctors at the hospital of the new pending patient.
 
 const { predictECG } = require('./aiService');
-const { sendDiagnosticSMS } = require('./smsService');
+const { sendDiagnosticEmail, sendNewPatientNotification, sendHighRiskAlertEmail } = require('./emailService');
 const pool = require('../db/pool');
 
 // Build a realistic ECG waveform for each rhythm class
@@ -25,7 +26,6 @@ function buildSyntheticECG(rhythmClass) {
   return signal;
 }
 
-// Pick the BPM that goes with each scenario
 const SCENARIOS = [
   { rhythm: 'Normal', bpm: 72 },
   { rhythm: 'Normal', bpm: 78 },
@@ -45,7 +45,6 @@ const SCENARIOS = [
  */
 async function autoAssignInitialECGs(patientId, hospitalId) {
   try {
-    // 1 Normal, then 1-2 additional varied scenarios
     const normalIdx = Math.floor(Math.random() * 3);
     const additionalCount = Math.random() < 0.5 ? 1 : 2;
 
@@ -55,12 +54,18 @@ async function autoAssignInitialECGs(patientId, hospitalId) {
       selectedScenarios.push(SCENARIOS[idx]);
     }
 
+    // Fetch patient info once at the start (for emails)
+    const patientInfo = await pool.query(
+      'SELECT name, email FROM patients WHERE patient_id = $1',
+      [patientId]
+    );
+    const patient = patientInfo.rows[0];
+
     for (let i = 0; i < selectedScenarios.length; i++) {
       const scenario = selectedScenarios[i];
       const signal = buildSyntheticECG(scenario.rhythm);
       const rrInterval = 60 / scenario.bpm;
 
-      // Backdate the timestamps so older records appear older
       const daysAgo = (selectedScenarios.length - i) * (Math.floor(Math.random() * 5) + 1);
       const recordedAt = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000);
 
@@ -89,13 +94,13 @@ async function autoAssignInitialECGs(patientId, hospitalId) {
       );
       const recordId = insertResult.rows[0].record_id;
 
-      // If HIGH risk, create the alert too
+      // If HIGH risk, create the alert AND email all doctors at the hospital
       if (aiResult.cvd_risk_category === 'HIGH') {
         const doctorRes = await pool.query(
           'SELECT assigned_doctor_id FROM patients WHERE patient_id = $1',
           [patientId]
         );
-        const doctorId = doctorRes.rows[0]?.assigned_doctor_id;
+        const doctorId = doctorRes.rows[0]?.assigned_doctor_id || null;
 
         await pool.query(
           `INSERT INTO alerts
@@ -107,26 +112,40 @@ async function autoAssignInitialECGs(patientId, hospitalId) {
             `HIGH CVD risk detected: ${aiResult.rhythm_class} (score: ${aiResult.cvd_risk_score})`,
           ]
         );
+
+        // Email the assigned doctor (if claimed) OR all doctors at hospital (if still pending)
+        const doctorsToEmail = await pool.query(
+          doctorId
+            ? 'SELECT name, email FROM doctors WHERE doctor_id = $1 AND email IS NOT NULL'
+            : 'SELECT name, email FROM doctors WHERE hospital_id = $1 AND email IS NOT NULL',
+          [doctorId || hospitalId]
+        );
+        for (const doc of doctorsToEmail.rows) {
+          sendHighRiskAlertEmail(doc.email, doc.name, patient.name, patientId, aiResult);
+        }
       }
 
-      // Send diagnostic SMS to the patient (graceful — won't crash if phone is unverified)
-      const patientRes = await pool.query(
-        'SELECT name, phone FROM patients WHERE patient_id = $1',
-        [patientId]
-      );
-      if (patientRes.rows.length > 0 && patientRes.rows[0].phone) {
-        sendDiagnosticSMS(
-          patientRes.rows[0].phone,
-          patientRes.rows[0].name,
-          recordId,
-          aiResult.rhythm_class,
-          aiResult.cvd_risk_category,
-          aiResult.cvd_risk_score
-        );
+      // Send diagnostic email to the patient
+      if (patient && patient.email) {
+        sendDiagnosticEmail(patient.email, patient.name, aiResult);
       }
     }
 
     console.log(`✓ Auto-assigned ${selectedScenarios.length} ECG records to patient ${patientId}`);
+
+    // Notify all doctors at this hospital that a new patient is awaiting assignment
+    if (hospitalId && patient) {
+      const doctorsResult = await pool.query(
+        'SELECT name, email FROM doctors WHERE hospital_id = $1 AND email IS NOT NULL',
+        [hospitalId]
+      );
+      for (const doctor of doctorsResult.rows) {
+        sendNewPatientNotification(doctor.email, doctor.name, patient.name);
+      }
+      if (doctorsResult.rows.length > 0) {
+        console.log(`✓ Notified ${doctorsResult.rows.length} doctor(s) at hospital ${hospitalId} of new patient`);
+      }
+    }
   } catch (err) {
     console.error(`autoAssignInitialECGs error for patient ${patientId}: ${err.message}`);
   }

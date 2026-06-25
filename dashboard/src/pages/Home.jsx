@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useTheme } from '../ThemeContext';
+import { useTranslation } from 'react-i18next';
 
 const heroImage = 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=1600&q=80';
 const aiImage = 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80';
@@ -9,37 +10,40 @@ const ecgWaveImage = 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?
 
 export default function Home() {
   const { mode, toggleMode } = useTheme();
+  const { t, i18n } = useTranslation();
+
+  const toggleLanguage = () => {
+    const newLang = i18n.language === 'fr' ? 'en' : 'fr';
+    i18n.changeLanguage(newLang);
+    localStorage.setItem('ecg_language', newLang);
+  };
 
   return (
     <div>
-      {/* Floating theme toggle */}
-      <button onClick={toggleMode} title={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'} style={{
+      {/* Floating toggles */}
+      <div style={{
         position: 'fixed', top: 20, right: 20, zIndex: 1000,
-        background: mode === 'dark' ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.4)',
-        color: '#fff', border: '1px solid rgba(255,255,255,0.3)',
-        width: 42, height: 42, borderRadius: '50%',
-        cursor: 'pointer', fontSize: 18,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        backdropFilter: 'blur(10px)',
+        display: 'flex', gap: 8,
       }}>
-        {mode === 'dark' ? '☀️' : '🌙'}
-      </button>
+        <button onClick={toggleLanguage} title="Change language" style={floatBtn(mode)}>
+          {i18n.language === 'fr' ? 'FR' : 'EN'}
+        </button>
+        <button onClick={toggleMode} title={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'} style={floatBtn(mode)}>
+          {mode === 'dark' ? '☀️' : '🌙'}
+        </button>
+      </div>
 
       {/* HERO SECTION */}
       <section style={hero.section}>
         <div style={hero.overlay}>
           <div style={hero.content}>
-            <h1 style={hero.title}>Cloud-Native ECG AI Platform</h1>
-            <p style={hero.subtitle}>
-              Hospital Integration · 1D-CNN Arrhythmia Detection · CVD Risk Prediction
-            </p>
-            <p style={hero.tagline}>
-              Bridging hospital ECG equipment with real-time AI cardiac analysis and proactive physician alerts.
-            </p>
+            <h1 style={hero.title}>{t('home.hero_title')}</h1>
+            <p style={hero.subtitle}>{t('home.hero_subtitle')}</p>
+            <p style={hero.tagline}>{t('home.hero_tagline')}</p>
             <div style={hero.ctaRow}>
-              <Link to="/login" style={hero.ctaPrimary}>Doctor Login →</Link>
-              <Link to="/patient/signup" style={hero.ctaSecondary}>Patient Sign Up →</Link>
-              <a href="#features" style={{ ...hero.ctaSecondary, border: 'none' }}>Learn More</a>
+              <Link to="/login" style={hero.ctaPrimary}>{t('home.cta_doctor')}</Link>
+              <Link to="/patient/signup" style={hero.ctaSecondary}>{t('home.cta_patient')}</Link>
+              <a href="#features" style={{ ...hero.ctaSecondary, border: 'none' }}>{t('home.cta_learn_more')}</a>
             </div>
           </div>
         </div>
@@ -50,55 +54,52 @@ export default function Home() {
         <div style={stats.grid}>
           <div style={stats.item}>
             <div style={stats.number}>96.4%</div>
-            <div style={stats.label}>Weighted F1-score on MIT-BIH</div>
+            <div style={stats.label}>{t('home.stat_f1')}</div>
           </div>
           <div style={stats.item}>
             <div style={stats.number}>&lt; 5s</div>
-            <div style={stats.label}>End-to-end alert dispatch</div>
+            <div style={stats.label}>{t('home.stat_dispatch')}</div>
           </div>
           <div style={stats.item}>
             <div style={stats.number}>3-class</div>
-            <div style={stats.label}>1D-CNN: AFib · Normal · PVC</div>
+            <div style={stats.label}>{t('home.stat_cnn')}</div>
           </div>
           <div style={stats.item}>
             <div style={stats.number}>+237</div>
-            <div style={stats.label}>SMS-based alerts via Twilio</div>
+            <div style={stats.label}>{t('home.stat_sms')}</div>
           </div>
         </div>
       </section>
 
       {/* FEATURES */}
       <section id="features" style={features.section}>
-        <h2 style={features.heading}>How It Works</h2>
-        <p style={features.intro}>
-          A complete five-layer cloud-native architecture that connects existing hospital ECG equipment
-          to an AI processing engine, with real-time results delivered to physicians.
-        </p>
+        <h2 style={features.heading}>{t('home.features_heading')}</h2>
+        <p style={features.intro}>{t('home.features_intro')}</p>
 
         <div style={features.grid}>
           <FeatureCard
             image={hospitalImage}
             number="01"
-            title="Hospital ECG Acquisition"
-            text="Standard 12-lead ECG equipment already deployed in Cameroonian hospitals captures the patient's cardiac signal during a routine examination."
+            title={t('home.feature1_title')}
+            text={t('home.feature1_text')}
           />
           <FeatureCard
             image={cloudImage}
             number="02"
-            title="Cloud Integration Gateway"
-            text="ECG data is securely transmitted via HTTPS API with hospital-level authentication. No wearable device required — the workflow plugs into existing hospital practice."
+            title={t('home.feature2_title')}
+            text={t('home.feature2_text')}
           />
           <FeatureCard
             image={aiImage}
             number="03"
-            title="AI Cardiac Analysis"
-            text="A 1D Convolutional Neural Network classifies the heartbeat rhythm and an XGBoost model predicts cardiovascular disease risk on a 0–100 scale."
+            title={t('home.feature3_title')}
+            text={t('home.feature3_text')}
           />
           <FeatureCard
             image={ecgWaveImage}
             number="04"
-            title="Real-Time Alerts"
-            text="When HIGH cardiovascular risk is detected, the responsible physician receives an SMS alert within 5 seconds — even if they are away from the dashboard."
+            title={t('home.feature4_title')}
+            text={t('home.feature4_text')}
           />
         </div>
       </section>
@@ -107,23 +108,10 @@ export default function Home() {
       <section style={about.section}>
         <div style={about.grid}>
           <div style={about.text}>
-            <h2 style={about.heading}>Built for Healthcare in Africa</h2>
-            <p style={about.paragraph}>
-              This platform was designed as the final-year B.Tech project of the
-              School of Engineering and Applied Science at the University Institute
-              of the Coast (IUC), Douala.
-            </p>
-            <p style={about.paragraph}>
-              It addresses the specific challenges of cardiac diagnosis in
-              resource-constrained settings: shortage of cardiologists,
-              limited cardiac AI tools tailored for African contexts, and delayed
-              identification of high-risk patients.
-            </p>
-            <p style={about.paragraph}>
-              The system uses peer-reviewed, clinically validated data sources
-              (the MIT-BIH Arrhythmia Database) and follows international
-              standards for medical software, including HL7 FHIR for data exchange.
-            </p>
+            <h2 style={about.heading}>{t('home.about_heading')}</h2>
+            <p style={about.paragraph}>{t('home.about_p1')}</p>
+            <p style={about.paragraph}>{t('home.about_p2')}</p>
+            <p style={about.paragraph}>{t('home.about_p3')}</p>
             <div style={about.tags}>
               <span style={about.tag}>FastAPI</span>
               <span style={about.tag}>Node.js</span>
@@ -142,18 +130,18 @@ export default function Home() {
 
       {/* CTA STRIP */}
       <section style={cta.section}>
-        <h2 style={cta.heading}>Ready to access the platform?</h2>
-        <p style={cta.subtitle}>Doctors review patient data · Patients track their own cardiac health.</p>
+        <h2 style={cta.heading}>{t('home.cta_heading')}</h2>
+        <p style={cta.subtitle}>{t('home.cta_subtitle')}</p>
         <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginTop: 24, flexWrap: 'wrap' }}>
-          <Link to="/login" style={cta.button}>Doctor Login →</Link>
-          <Link to="/patient/signup" style={{ ...cta.button, background: '#2e7d32', color: '#fff' }}>Patient Sign Up →</Link>
+          <Link to="/login" style={cta.button}>{t('home.cta_doctor')}</Link>
+          <Link to="/patient/signup" style={{ ...cta.button, background: '#2e7d32', color: '#fff' }}>{t('home.cta_patient')}</Link>
         </div>
       </section>
 
       {/* FOOTER */}
       <footer style={footer.section}>
-        <p>© 2026 ECG AI Platform · IUC B.Tech Final Project · School of Engineering and Applied Science</p>
-        <p style={{ fontSize: 12, opacity: 0.75 }}>EKWED LAURENCE JUNIOR & EKWE DANIEL FLORIAN · Supervisor: Mr. DONGMO KENFACK VANICK</p>
+        <p>{t('home.footer_credits')}</p>
+        <p style={{ fontSize: 12, opacity: 0.75 }}>{t('home.footer_authors')}</p>
       </footer>
     </div>
   );
@@ -172,7 +160,17 @@ function FeatureCard({ image, number, title, text }) {
   );
 }
 
-// ── STYLES ────────────────────────────────────────────────────────
+function floatBtn(mode) {
+  return {
+    background: mode === 'dark' ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.4)',
+    color: '#fff', border: '1px solid rgba(255,255,255,0.3)',
+    width: 42, height: 42, borderRadius: '50%',
+    cursor: 'pointer', fontSize: 14, fontWeight: 600,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    backdropFilter: 'blur(10px)',
+  };
+}
+
 const hero = {
   section: {
     minHeight: '70vh',
@@ -222,9 +220,7 @@ const features = {
     boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
     transition: 'transform 0.2s, box-shadow 0.2s',
   },
-  cardImage: {
-    height: 180, backgroundSize: 'cover', backgroundPosition: 'center',
-  },
+  cardImage: { height: 180, backgroundSize: 'cover', backgroundPosition: 'center' },
   cardBody: { padding: 24 },
   cardNumber: { color: '#2e75b6', fontWeight: 700, fontSize: 14, letterSpacing: 1, marginBottom: 8 },
   cardTitle: { color: '#1f4e79', fontSize: 18, margin: '0 0 12px 0' },
@@ -241,31 +237,18 @@ const about = {
   heading: { color: '#1f4e79', fontSize: 30, margin: 0 },
   paragraph: { color: '#444', fontSize: 15, lineHeight: 1.7, marginTop: 16 },
   tags: { display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 24 },
-  tag: {
-    background: '#e8eaf6', color: '#1a237e',
-    padding: '4px 12px', borderRadius: 16, fontSize: 12, fontWeight: 600,
-  },
+  tag: { background: '#e8eaf6', color: '#1a237e', padding: '4px 12px', borderRadius: 16, fontSize: 12, fontWeight: 600 },
   imageWrap: { borderRadius: 8, overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.12)' },
   image: { width: '100%', display: 'block' },
 };
 
 const cta = {
-  section: {
-    background: 'linear-gradient(135deg, #1f4e79, #2e75b6)',
-    color: '#fff', padding: '56px 32px', textAlign: 'center',
-  },
+  section: { background: 'linear-gradient(135deg, #1f4e79, #2e75b6)', color: '#fff', padding: '56px 32px', textAlign: 'center' },
   heading: { fontSize: 28, margin: 0 },
   subtitle: { fontSize: 16, marginTop: 12, opacity: 0.92 },
-  button: {
-    display: 'inline-block', background: '#fff', color: '#1f4e79',
-    padding: '14px 32px', borderRadius: 6, marginTop: 24,
-    textDecoration: 'none', fontWeight: 600, fontSize: 15,
-  },
+  button: { display: 'inline-block', background: '#fff', color: '#1f4e79', padding: '14px 32px', borderRadius: 6, marginTop: 24, textDecoration: 'none', fontWeight: 600, fontSize: 15 },
 };
 
 const footer = {
-  section: {
-    background: '#0f2745', color: '#fff', padding: '24px 32px',
-    textAlign: 'center', fontSize: 13,
-  },
+  section: { background: '#0f2745', color: '#fff', padding: '24px 32px', textAlign: 'center', fontSize: 13 },
 };

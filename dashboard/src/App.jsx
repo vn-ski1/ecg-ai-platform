@@ -9,8 +9,11 @@ import Home from './pages/Home';
 import PatientSignup from './pages/PatientSignup';
 import PatientLogin from './pages/PatientLogin';
 import PatientHome from './pages/PatientHome';
+import DoctorSignup from './pages/DoctorSignup';
+import PendingPatients from './pages/PendingPatients';
 import { colors, fonts, shadows, radius, transitions } from './theme';
 import { useTheme } from './ThemeContext';
+import { useTranslation } from 'react-i18next';
 
 function setupAxiosAuth(token) {
   if (token) {
@@ -20,12 +23,12 @@ function setupAxiosAuth(token) {
   }
 }
 setupAxiosAuth(localStorage.getItem('ecg_token'));
+
 // Global interceptor: auto-logout on expired/invalid tokens
 axios.interceptors.response.use(
   response => response,
   error => {
     if (error.response?.status === 401 && error.response?.data?.error?.includes('expired')) {
-      // Clear all auth state and redirect to login
       localStorage.removeItem('ecg_token');
       localStorage.removeItem('ecg_doctor');
       localStorage.removeItem('ecg_patient_token');
@@ -69,6 +72,12 @@ function App() {
   });
 
   const { mode, toggleMode } = useTheme();
+  const { t, i18n } = useTranslation();
+  const toggleLanguage = () => {
+    const newLang = i18n.language === 'fr' ? 'en' : 'fr';
+    i18n.changeLanguage(newLang);
+    localStorage.setItem('ecg_language', newLang);
+  };
 
   useEffect(() => { setupAxiosAuth(token); }, [token]);
 
@@ -104,22 +113,26 @@ function App() {
           <>
             <header style={styles.header}>
               <div>
-                <h1 style={styles.title}>ECG AI Platform — Doctor Dashboard</h1>
-                <p style={styles.subtitle}>Hospital Integration Edition · IUC B.Tech Final Project</p>
+                <h1 style={styles.title}>{t('header.doctor_dashboard')}</h1>
+                <p style={styles.subtitle}>{t('header.hospital_edition')}</p>
               </div>
               <div style={styles.headerRight}>
                 <div style={{ fontSize: 13, opacity: 0.9 }}>
                   {doctor?.name} · {doctor?.specialty}
                 </div>
+                <button onClick={toggleLanguage} style={styles.themeBtn} title="Change language">
+                  {i18n.language === 'fr' ? 'FR' : 'EN'}
+                </button>
                 <button onClick={toggleMode} style={styles.themeBtn} title={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
                   {mode === 'dark' ? '☀️' : '🌙'}
                 </button>
-                <button onClick={handleDoctorLogout} style={styles.logoutBtn}>Logout</button>
+                <button onClick={handleDoctorLogout} style={styles.logoutBtn}>{t('nav.logout')}</button>
               </div>
             </header>
             <nav style={styles.nav}>
-              <NavItem to="/patients">Patients</NavItem>
-              <NavItem to="/alerts">Alerts</NavItem>
+              <NavItem to="/patients">{t('nav.patients')}</NavItem>
+              <NavItem to="/pending-patients">Pending</NavItem>
+              <NavItem to="/alerts">{t('nav.alerts')}</NavItem>
             </nav>
           </>
         )}
@@ -127,15 +140,18 @@ function App() {
         {isPatient && (
           <header style={{ ...styles.header, background: `linear-gradient(135deg, ${colors.accentDark} 0%, ${colors.accent} 100%)` }}>
             <div>
-              <h1 style={styles.title}>ECG AI Platform — Patient Portal</h1>
-              <p style={styles.subtitle}>Your personal cardiac analysis dashboard</p>
+              <h1 style={styles.title}>{t('header.patient_portal')}</h1>
+              <p style={styles.subtitle}>{t('header.patient_subtitle')}</p>
             </div>
             <div style={styles.headerRight}>
               <div style={{ fontSize: 13, opacity: 0.9 }}>{patient?.name}</div>
+              <button onClick={toggleLanguage} style={styles.themeBtn} title="Change language">
+                {i18n.language === 'fr' ? 'FR' : 'EN'}
+              </button>
               <button onClick={toggleMode} style={styles.themeBtn} title={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
                 {mode === 'dark' ? '☀️' : '🌙'}
               </button>
-              <button onClick={handlePatientLogout} style={styles.logoutBtn}>Logout</button>
+              <button onClick={handlePatientLogout} style={styles.logoutBtn}>{t('nav.logout')}</button>
             </div>
           </header>
         )}
@@ -148,6 +164,9 @@ function App() {
           <Route path="/login" element={
             isDoctor ? <Navigate to="/patients" /> : <Login onLogin={handleDoctorLogin} />
           } />
+          <Route path="/doctor/signup" element={
+            isDoctor ? <Navigate to="/patients" /> : <DoctorSignup onSignup={handleDoctorLogin} />
+          } />
           <Route path="/patients" element={
             isDoctor ? <main style={styles.main}><PatientList /></main> : <Navigate to="/login" />
           } />
@@ -156,6 +175,9 @@ function App() {
           } />
           <Route path="/alerts" element={
             isDoctor ? <main style={styles.main}><Alerts /></main> : <Navigate to="/login" />
+          } />
+          <Route path="/pending-patients" element={
+            isDoctor ? <main style={styles.main}><PendingPatients /></main> : <Navigate to="/login" />
           } />
 
           {/* Patient */}
