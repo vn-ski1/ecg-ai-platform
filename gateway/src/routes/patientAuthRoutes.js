@@ -3,6 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
+const axios = require('axios');
 const pool = require('../db/pool');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-dev-secret';
@@ -10,6 +11,8 @@ const JWT_EXPIRES_IN = '8h';
 const upload = multer({ storage: multer.memoryStorage() });
 const { sendWelcomeEmail } = require('../services/emailService');
 const { autoAssignInitialECGs } = require('../services/autoEcgService');
+
+const AI_URL = process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000';
 
 pool.query('ALTER TABLE patients ADD COLUMN IF NOT EXISTS profile_picture TEXT').catch(() => {});
 
@@ -201,6 +204,160 @@ router.put('/profile', authenticatePatient, upload.single('profile_picture'), as
   } catch (err) {
     console.error('PUT /profile error:', err.message);
     res.status(500).json({ error: 'Failed to update profile', detail: err.message });
+  }
+});
+
+// GET /api/v1/patient-auth/records/consolidated-pdf
+router.get('/records/consolidated-pdf', authenticatePatient, async (req, res) => {
+  try {
+    const patientId = req.patient.patient_id;
+
+    // Fetch patient info + hospital + assigned doctor
+    const patientResult = await pool.query(
+      `SELECT p.patient_id, p.name, p.email, p.date_of_birth, p.phone, p.gender,
+              h.hospital_name,
+              d.name AS assigned_doctor_name
+       FROM patients p
+       LEFT JOIN hospitals h ON h.hospital_id = p.hospital_id
+       LEFT JOIN doctors d ON d.doctor_id = p.assigned_doctor_id
+       WHERE p.patient_id = $1`,
+      [patientId]
+    );
+    if (patientResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Patient not found' });
+    }
+    const patient = patientResult.rows[0];
+
+    // Fetch all ECG records, newest first
+    const recordsResult = await pool.query(
+      `SELECT record_id, recorded_at, rhythm_class, confidence, bpm,
+              cvd_risk_score, cvd_risk_category, signal_data
+       FROM ecg_records WHERE patient_id = $1 ORDER BY recorded_at DESC`,
+      [patientId]
+    );
+
+    // Call AI service
+    const aiResponse = await axios.post(
+      `${AI_URL}/generate-consolidated-report`,
+      {
+        patient: {
+          patient_id: patient.patient_id,
+          name: patient.name,
+          email: patient.email,
+          date_of_birth: patient.date_of_birth ? patient.date_of_birth.toISOString().split('T')[0] : null,
+          gender: patient.gender,
+          phone: patient.phone,
+          hospital_name: patient.hospital_name,
+          assigned_doctor_name: patient.assigned_doctor_name,
+        },
+        records: recordsResult.rows.map(r => ({
+          record_id: r.record_id,
+          recorded_at: r.recorded_at,
+          rhythm_class: r.rhythm_class,
+          confidence: r.confidence,
+          bpm: r.bpm,
+          cvd_risk_score: r.cvd_risk_score,
+          cvd_risk_category: r.cvd_risk_category,
+          signal_data: r.signal_data,
+        })),
+      },
+      { responseType: 'arraybuffer', timeout: 120000 }
+    );
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="ecg-full-history-${patientId}.pdf"`);
+    res.send(Buffer.from(aiResponse.data));
+
+  } catch (err) {
+    console.error('Consolidated PDF error:', err.message);
+    res.status(502).json({ error: 'PDF generation failed', detail: err.message });
+  }
+});
+
+// GET /api/v1/patient-auth/records/all/pdf
+router.get('/records/all/pdf', authenticatePatient, async (req, res) => {
+  try {
+    const patientId = req.patient.patient_id;
+
+    const patientResult = await pool.query(
+      `SELECT p.patient_id, p.name, p.email, p.date_of_birth, p.phone, p.gender,
+              h.hospital_name,
+              d.name AS doctor_name, d.specialty AS doctor_specialty
+       FROM patients p
+       LEFT JOIN hospitals h ON h.hospital_id = p.hospital_id
+       LEFT JOIN doctors d ON d.doctor_id = p.assigned_doctor_id
+       WHERE p.patient_id = $1`,
+      [patientId]
+    );
+    if (patientResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Patient not found' });
+    }
+    const patient = patientResult.rows[0];
+
+    const recordsResult = await pool.query(
+      `SELECT record_id, recorded_at, rhythm_class, confidence, bpm,
+              cvd_risk_score, cvd_risk_category, signal_data
+       FROM ecg_records WHERE patient_id = $1
+       ORDER BY recorded_at ASC`,
+      [patientId]
+    );
+
+    if (recordsResult.rows.length === 0) {
+      return res.status(404).json({ error: 'No ECG records to export yet' });
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+
+    const aiResponse = await axios.post(
+      `${AI_URL}/generate-full-report`,
+      {
+        patient: {
+          patient_id: patient.patient_id,
+          name: patient.name,
+          email: patient.email,
+          date_of_birth: patient.date_of_birth ? patient.date_of_birth.toISOString().split('T')[0] : null,
+          gender: patient.gender,
+          phone: patient.phone,
+          hospital_name: patient.hospital_name,
+          doctor_name: patient.doctor_name,
+          doctor_specialty: patient.doctor_specialty,
+        },
+        records: recordsResult.rows.map(r => ({
+          record_id: r.record_id,
+          recorded_at: r.recorded_at,
+          rhythm_class: r.rhythm_class,
+          confidence: r.confidence,
+          bpm: r.bpm,
+          cvd_risk_score: r.cvd_risk_score,
+          cvd_risk_category: r.cvd_risk_category,
+          signal_data: typeof r.signal_data === 'string' ? JSON.parse(r.signal_data) : r.signal_data,
+        })),
+        generated_at: new Date().toISOString(),
+      },
+      { responseType: 'arraybuffer', timeout: 120000 }
+    );
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition',
+      `attachment; filename="ecg-full-history-${patientId}-${today}.pdf"`);
+    res.send(Buffer.from(aiResponse.data));
+
+    console.log(`✓ Full PDF for patient #${patientId} — ${recordsResult.rows.length} records`);
+
+  } catch (err) {
+    let detail = err.message;
+    if (err.response?.data) {
+      try {
+        const body = Buffer.from(err.response.data).toString('utf-8');
+        const parsed = JSON.parse(body);
+        detail = JSON.stringify(parsed.detail ?? parsed);
+      } catch (_) {}
+    }
+    console.error('Full PDF error:', err.response?.status, detail);
+    if (err.response?.status === 404) {
+      return res.status(404).json({ error: 'No ECG records to export yet' });
+    }
+    res.status(502).json({ error: 'PDF generation failed', detail });
   }
 });
 

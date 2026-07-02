@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import { colors, shadows, radius, transitions, riskColor } from '../theme';
 
-const API = 'http://localhost:3000/api/v1/ecg';
+const API = `http://${window.location.hostname}:3000/api/v1/ecg`;
 
 export default function Alerts() {
   const { t } = useTranslation();

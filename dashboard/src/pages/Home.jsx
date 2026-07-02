@@ -7,6 +7,9 @@ const aiImage = 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800
 const cloudImage = 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&q=80';
 const hospitalImage = 'https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?w=800&q=80';
 const ecgWaveImage = 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=1200&q=80';
+const defenseImage1 = 'https://images.unsplash.com/photo-1496307653780-42ee777d4833?w=800&q=80';
+const defenseImage2 = 'https://images.unsplash.com/photo-1550831107-1553da8c8464?w=800&q=80';
+const defenseImage3 = 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&q=80';
 
 export default function Home() {
   const { mode, toggleMode } = useTheme();
@@ -41,8 +44,8 @@ export default function Home() {
             <p style={hero.subtitle}>{t('home.hero_subtitle')}</p>
             <p style={hero.tagline}>{t('home.hero_tagline')}</p>
             <div style={hero.ctaRow}>
-              <Link to="/login" style={hero.ctaPrimary}>{t('home.cta_doctor')}</Link>
-              <Link to="/patient/signup" style={hero.ctaSecondary}>{t('home.cta_patient')}</Link>
+              <Link to="/login" style={hero.ctaPrimary}>Sign In</Link>
+              <Link to="/signup" style={hero.ctaSecondary}>Sign Up</Link>
               <a href="#features" style={{ ...hero.ctaSecondary, border: 'none' }}>{t('home.cta_learn_more')}</a>
             </div>
           </div>
@@ -101,6 +104,24 @@ export default function Home() {
             title={t('home.feature4_title')}
             text={t('home.feature4_text')}
           />
+          <FeatureCard
+            image={defenseImage1}
+            number="05"
+            title={t('home.defense1_title')}
+            text={t('home.defense1_text')}
+          />
+          <FeatureCard
+            image={defenseImage2}
+            number="06"
+            title={t('home.defense2_title')}
+            text={t('home.defense2_text')}
+          />
+          <FeatureCard
+            image={defenseImage3}
+            number="07"
+            title={t('home.defense3_title')}
+            text={t('home.defense3_text')}
+          />
         </div>
       </section>
 
@@ -123,7 +144,7 @@ export default function Home() {
             </div>
           </div>
           <div style={about.imageWrap}>
-            <img src={ecgWaveImage} alt="ECG waveform" style={about.image} />
+            <img className="about-image-hover" src={ecgWaveImage} alt="ECG waveform" style={about.image} />
           </div>
         </div>
       </section>
@@ -133,8 +154,8 @@ export default function Home() {
         <h2 style={cta.heading}>{t('home.cta_heading')}</h2>
         <p style={cta.subtitle}>{t('home.cta_subtitle')}</p>
         <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginTop: 24, flexWrap: 'wrap' }}>
-          <Link to="/login" style={cta.button}>{t('home.cta_doctor')}</Link>
-          <Link to="/patient/signup" style={{ ...cta.button, background: '#2e7d32', color: '#fff' }}>{t('home.cta_patient')}</Link>
+          <Link to="/login" style={cta.button}>Sign In</Link>
+          <Link to="/signup" style={{ ...cta.button, background: '#2e7d32', color: '#fff' }}>Sign Up</Link>
         </div>
       </section>
 
@@ -149,8 +170,8 @@ export default function Home() {
 
 function FeatureCard({ image, number, title, text }) {
   return (
-    <div style={features.card}>
-      <div style={{ ...features.cardImage, backgroundImage: `url(${image})` }} />
+    <div className="feature-card" style={features.card}>
+      <div className="feature-card-image" style={{ ...features.cardImage, backgroundImage: `url(${image})` }} />
       <div style={features.cardBody}>
         <div style={features.cardNumber}>{number}</div>
         <h3 style={features.cardTitle}>{title}</h3>

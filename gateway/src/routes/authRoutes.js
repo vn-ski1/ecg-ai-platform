@@ -75,7 +75,7 @@ router.post('/signup', async (req, res) => {
 });
 
 
-// POST /api/v1/auth/login
+// POST /api/v1/auth/login — unified: tries doctors first, then patients
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
@@ -84,41 +84,55 @@ router.post('/login', async (req, res) => {
   }
 
   try {
-    const result = await pool.query(
+    // 1. Try doctor
+    const doctorResult = await pool.query(
       'SELECT doctor_id, name, email, specialty, password_hash FROM doctors WHERE email = $1',
       [email]
     );
 
-    if (result.rows.length === 0) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+    if (doctorResult.rows.length > 0) {
+      const doctor = doctorResult.rows[0];
+      const valid = await bcrypt.compare(password, doctor.password_hash);
+      if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
+
+      const token = jwt.sign(
+        { doctor_id: doctor.doctor_id, email: doctor.email, name: doctor.name },
+        JWT_SECRET,
+        { expiresIn: JWT_EXPIRES_IN }
+      );
+      return res.json({
+        role: 'doctor',
+        token,
+        doctor: { doctor_id: doctor.doctor_id, name: doctor.name, email: doctor.email, specialty: doctor.specialty },
+      });
     }
 
-    const doctor = result.rows[0];
-
-    const valid = await bcrypt.compare(password, doctor.password_hash);
-    if (!valid) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    const token = jwt.sign(
-      {
-        doctor_id: doctor.doctor_id,
-        email: doctor.email,
-        name: doctor.name
-      },
-      JWT_SECRET,
-      { expiresIn: JWT_EXPIRES_IN }
+    // 2. Try patient — use the same secret as patientAuthRoutes.js so the token verifies correctly
+    const patientResult = await pool.query(
+      'SELECT patient_id, name, email, password_hash FROM patients WHERE email = $1',
+      [email]
     );
 
-    res.json({
-      token: token,
-      doctor: {
-        doctor_id: doctor.doctor_id,
-        name: doctor.name,
-        email: doctor.email,
-        specialty: doctor.specialty
-      }
-    });
+    if (patientResult.rows.length > 0) {
+      const patient = patientResult.rows[0];
+      if (!patient.password_hash) return res.status(401).json({ error: 'Invalid credentials' });
+      const valid = await bcrypt.compare(password, patient.password_hash);
+      if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
+
+      const patientSecret = process.env.JWT_SECRET || 'fallback-dev-secret';
+      const token = jwt.sign(
+        { patient_id: patient.patient_id, email: patient.email, name: patient.name, role: 'patient' },
+        patientSecret,
+        { expiresIn: JWT_EXPIRES_IN }
+      );
+      return res.json({
+        role: 'patient',
+        token,
+        patient: { patient_id: patient.patient_id, name: patient.name, email: patient.email },
+      });
+    }
+
+    return res.status(401).json({ error: 'Invalid credentials' });
 
   } catch (err) {
     console.error('Login error:', err.message);

@@ -3,7 +3,7 @@ import axios from 'axios';
 import { colors, shadows, radius, transitions } from '../theme';
 import { useTranslation } from 'react-i18next';
 
-const API = 'http://localhost:3000/api/v1';
+import { API } from '../config';
 
 export default function PatientSettings() {
   const { t } = useTranslation();

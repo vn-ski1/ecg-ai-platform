@@ -5,7 +5,7 @@ import axios from 'axios';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { colors, shadows, radius, transitions, riskColor } from '../theme';
 
-const API = 'http://localhost:3000/api/v1/ecg';
+const API = `http://${window.location.hostname}:3000/api/v1/ecg`;
 
 export default function PatientList() {
   const { t } = useTranslation();

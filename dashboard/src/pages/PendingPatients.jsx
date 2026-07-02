@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { colors, shadows, radius, transitions, riskColor } from '../theme';
 
-const API = 'http://localhost:3000/api/v1/ecg';
+const API = `http://${window.location.hostname}:3000/api/v1/ecg`;
 
 export default function PendingPatients() {
   const [patients, setPatients] = useState([]);

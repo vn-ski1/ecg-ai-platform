@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { colors, shadows, radius, transitions, riskColor } from '../theme';
 
-const API = 'http://localhost:3000/api/v1';
+import { API } from '../config';
 
 export default function PatientHome() {
   const { t } = useTranslation();
@@ -12,6 +12,8 @@ export default function PatientHome() {
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem('ecg_patient_token');
@@ -28,6 +30,44 @@ export default function PatientHome() {
         setLoading(false);
       });
   }, []);
+
+  const handleDownloadAll = async () => {
+    setDownloading(true);
+    setDownloadError(null);
+    try {
+      const token = localStorage.getItem('ecg_patient_token');
+      const res = await axios.get(`${API}/patient-auth/records/all/pdf`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob',
+        timeout: 120000,
+      });
+      const url = URL.createObjectURL(res.data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ecg-full-history-${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      let msg = err.message;
+      if (err.response?.data instanceof Blob) {
+        try {
+          const text = await err.response.data.text();
+          const json = JSON.parse(text);
+          const base = json.error || msg;
+          msg = json.detail ? `${base}: ${json.detail}` : base;
+        } catch (_) {}
+      } else if (err.response?.data) {
+        const d = err.response.data;
+        const base = d.error || msg;
+        msg = d.detail ? `${base}: ${d.detail}` : base;
+      }
+      setDownloadError(msg || t('patient_home.download_error'));
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   if (loading) return <p style={{ padding: 32, color: colors.textMuted }}>{t('patient_home.loading')}</p>;
   if (error) return <p style={{ padding: 32, color: colors.risk.HIGH }}>{t('patient_home.error')}{error}</p>;
@@ -60,21 +100,48 @@ export default function PatientHome() {
               {patient.email} {patient.phone ? `· ${patient.phone}` : ''}
             </p>
           </div>
-          {latest && (
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 11, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600 }}>
-                {t('patient_home.current_risk')}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 12 }}>
+            {latest && (
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: 11, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600 }}>
+                  {t('patient_home.current_risk')}
+                </div>
+                <span style={{
+                  display: 'inline-block', marginTop: 8,
+                  background: riskColor(latest.cvd_risk_category),
+                  color: '#fff', padding: '8px 16px', borderRadius: radius.md,
+                  fontWeight: 700, fontSize: 18,
+                }}>
+                  {latest.cvd_risk_category} ({latest.cvd_risk_score}/100)
+                </span>
               </div>
-              <span style={{
-                display: 'inline-block', marginTop: 8,
-                background: riskColor(latest.cvd_risk_category),
-                color: '#fff', padding: '8px 16px', borderRadius: radius.md,
-                fontWeight: 700, fontSize: 18,
-              }}>
-                {latest.cvd_risk_category} ({latest.cvd_risk_score}/100)
-              </span>
-            </div>
-          )}
+            )}
+            <button
+              onClick={handleDownloadAll}
+              disabled={downloading || ecg_records.length === 0}
+              title={ecg_records.length === 0 ? t('patient_home.download_no_records') : ''}
+              style={{
+                background: ecg_records.length === 0 ? colors.bgSubtle : colors.primary,
+                color: ecg_records.length === 0 ? colors.textMuted : '#fff',
+                border: `1px solid ${ecg_records.length === 0 ? colors.border : colors.primary}`,
+                padding: '10px 20px',
+                borderRadius: radius.md,
+                fontWeight: 600,
+                fontSize: 14,
+                cursor: ecg_records.length === 0 ? 'not-allowed' : 'pointer',
+                transition: transitions.base,
+                opacity: downloading ? 0.7 : 1,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {downloading ? t('patient_home.download_preparing') : t('patient_home.download_results')}
+            </button>
+            {downloadError && (
+              <div style={{ fontSize: 12, color: colors.risk.HIGH, maxWidth: 220, textAlign: 'right' }}>
+                {downloadError}
+              </div>
+            )}
+          </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginTop: 24, fontSize: 14 }}>

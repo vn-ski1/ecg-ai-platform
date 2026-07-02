@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { colors, shadows, radius, transitions } from '../theme';
 
-const API = 'http://localhost:3000/api/v1';
+import { API } from '../config';
 
 export default function DoctorSignup({ onSignup }) {
   const [form, setForm] = useState({

@@ -27,14 +27,54 @@ function buildSyntheticECG(rhythmClass) {
 }
 
 const SCENARIOS = [
-  { rhythm: 'Normal', bpm: 72 },
-  { rhythm: 'Normal', bpm: 78 },
-  { rhythm: 'Normal', bpm: 68 },
-  { rhythm: 'Normal', bpm: 105 },   // sustained tachy
-  { rhythm: 'Normal', bpm: 52 },    // sustained brady
-  { rhythm: 'PVC', bpm: 88 },
-  { rhythm: 'AFib', bpm: 110 },
+  { rhythm: 'Normal', bpm: 72, weight: 30, riskCategory: 'LOW' },
+  { rhythm: 'Normal', bpm: 78, weight: 15, riskCategory: 'LOW' },
+  { rhythm: 'Normal', bpm: 68, weight: 15, riskCategory: 'LOW' },
+  { rhythm: 'Normal', bpm: 105, weight: 5, riskCategory: 'MODERATE' },   // sustained tachy
+  { rhythm: 'Normal', bpm: 52, weight: 5, riskCategory: 'MODERATE' },    // sustained brady
+  { rhythm: 'PVC', bpm: 88, weight: 15, riskCategory: 'HIGH' },
+  { rhythm: 'AFib', bpm: 110, weight: 15, riskCategory: 'HIGH' },
 ];
+
+function pickRandomScenario(categories = null) {
+  const pool = categories ? SCENARIOS.filter(item => categories.includes(item.riskCategory)) : SCENARIOS;
+  if (pool.length === 0) {
+    return SCENARIOS[0];
+  }
+
+  const totalWeight = pool.reduce((sum, item) => sum + item.weight, 0);
+  let pick = Math.random() * totalWeight;
+  for (const scenario of pool) {
+    pick -= scenario.weight;
+    if (pick <= 0) return scenario;
+  }
+  return pool[pool.length - 1];
+}
+
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
+function buildScenarioSet(recordCount) {
+  if (recordCount === 1) {
+    return [pickRandomScenario()];
+  }
+  if (recordCount === 2) {
+    return shuffleArray([
+      pickRandomScenario(['LOW']),
+      pickRandomScenario(['MODERATE', 'HIGH'])
+    ]);
+  }
+  return shuffleArray([
+    pickRandomScenario(['LOW']),
+    pickRandomScenario(['MODERATE']),
+    pickRandomScenario(['HIGH'])
+  ]);
+}
 
 /**
  * Assign initial ECG records to a freshly-registered patient.
@@ -45,14 +85,8 @@ const SCENARIOS = [
  */
 async function autoAssignInitialECGs(patientId, hospitalId) {
   try {
-    const normalIdx = Math.floor(Math.random() * 3);
-    const additionalCount = Math.random() < 0.5 ? 1 : 2;
-
-    const selectedScenarios = [SCENARIOS[normalIdx]];
-    for (let k = 0; k < additionalCount; k++) {
-      const idx = 3 + Math.floor(Math.random() * (SCENARIOS.length - 3));
-      selectedScenarios.push(SCENARIOS[idx]);
-    }
+    const recordCount = Math.floor(Math.random() * 3) + 1;
+    const selectedScenarios = buildScenarioSet(recordCount);
 
     // Fetch patient info once at the start (for emails)
     const patientInfo = await pool.query(

@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { colors, shadows, radius, transitions, riskColor } from '../theme';
 
-const API = 'http://localhost:3000/api/v1/ecg';
+const API = `http://${window.location.hostname}:3000/api/v1/ecg`;
 
 export default function PatientDetail() {
   const { t } = useTranslation();

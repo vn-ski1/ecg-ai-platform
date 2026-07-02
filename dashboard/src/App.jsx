@@ -10,6 +10,7 @@ import PatientSignup from './pages/PatientSignup';
 import PatientLogin from './pages/PatientLogin';
 import PatientHome from './pages/PatientHome';
 import DoctorSignup from './pages/DoctorSignup';
+import Signup from './pages/Signup';
 import PendingPatients from './pages/PendingPatients';
 import { colors, fonts, shadows, radius, transitions } from './theme';
 import { useTheme } from './ThemeContext';
@@ -162,7 +163,12 @@ function App() {
 
           {/* Doctor */}
           <Route path="/login" element={
-            isDoctor ? <Navigate to="/patients" /> : <Login onLogin={handleDoctorLogin} />
+            isDoctor ? <Navigate to="/patients" /> : isPatient ? <Navigate to="/patient/home" /> :
+            <Login onLogin={handleDoctorLogin} onPatientLogin={handlePatientLogin} />
+          } />
+          <Route path="/signup" element={
+            isDoctor ? <Navigate to="/patients" /> : isPatient ? <Navigate to="/patient/home" /> :
+            <Signup onDoctorSignup={handleDoctorLogin} onPatientSignup={handlePatientLogin} />
           } />
           <Route path="/doctor/signup" element={
             isDoctor ? <Navigate to="/patients" /> : <DoctorSignup onSignup={handleDoctorLogin} />

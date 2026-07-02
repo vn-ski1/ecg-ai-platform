@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import { colors, shadows, radius, transitions } from '../theme';
 
-const API = 'http://localhost:3000/api/v1';
+import { API } from '../config';
 
 export default function PatientLogin({ onLogin }) {
   const { t } = useTranslation();

@@ -113,3 +113,32 @@ html {
 .pulse-soft {
   animation: pulse-soft 2s ease-in-out infinite;
 }
+
+.feature-card {
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  cursor: pointer;
+}
+
+.feature-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 18px 40px rgba(15, 39, 69, 0.18);
+}
+
+.feature-card-image {
+  position: relative;
+  transition: transform 0.35s ease;
+}
+
+.feature-card:hover .feature-card-image {
+  transform: scale(1.08);
+}
+
+.about-image-hover {
+  display: block;
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+
+.about-image-hover:hover {
+  transform: scale(1.03);
+  box-shadow: 0 18px 40px rgba(15, 39, 69, 0.16);
+}
