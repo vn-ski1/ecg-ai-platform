@@ -12,6 +12,7 @@ import PatientHome from './pages/PatientHome';
 import DoctorSignup from './pages/DoctorSignup';
 import Signup from './pages/Signup';
 import PendingPatients from './pages/PendingPatients';
+import DeviceManagement from './pages/DeviceManagement';
 import { colors, fonts, shadows, radius, transitions } from './theme';
 import { useTheme } from './ThemeContext';
 import { useTranslation } from 'react-i18next';
@@ -134,6 +135,7 @@ function App() {
               <NavItem to="/patients">{t('nav.patients')}</NavItem>
               <NavItem to="/pending-patients">Pending</NavItem>
               <NavItem to="/alerts">{t('nav.alerts')}</NavItem>
+              <NavItem to="/devices">{t('nav.devices')}</NavItem>
             </nav>
           </>
         )}
@@ -184,6 +186,9 @@ function App() {
           } />
           <Route path="/pending-patients" element={
             isDoctor ? <main style={styles.main}><PendingPatients /></main> : <Navigate to="/login" />
+          } />
+          <Route path="/devices" element={
+            isDoctor ? <main style={styles.main}><DeviceManagement /></main> : <Navigate to="/login" />
           } />
 
           {/* Patient */}

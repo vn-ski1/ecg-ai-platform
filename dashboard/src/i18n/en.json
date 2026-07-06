@@ -5,7 +5,8 @@
     "home": "Home",
     "settings": "Settings",
     "logout": "Logout",
-    "back_home": "← Back to home"
+    "back_home": "← Back to home",
+    "devices": "Devices"
   },
   "header": {
     "doctor_dashboard": "ECG AI Platform — Doctor Dashboard",
@@ -136,7 +137,20 @@
     "heart_rate": "Heart Rate",
     "cvd_risk": "CVD Risk",
     "ecg_waveform": "ECG Waveform",
-    "waveform_caption": "360 samples · sampling rate 360 Hz · MIT-BIH style heartbeat window"
+    "waveform_caption": "360 samples · sampling rate 360 Hz · MIT-BIH style heartbeat window",
+    "chat_title": "Ask AI about this ECG",
+    "chat_open": "Ask AI →",
+    "chat_collapse": "Close",
+    "chat_suggestions": "Suggested questions:",
+    "chat_q1": "Why was this classified as \"{{rhythm}}\"?",
+    "chat_q2": "What does a CVD risk score of {{score}}/100 mean?",
+    "chat_q3": "Is a heart rate of {{bpm}} BPM normal?",
+    "chat_q4": "What are the clinical implications of this result?",
+    "chat_placeholder": "Ask a question about this ECG analysis...",
+    "chat_send": "Send",
+    "chat_features": "Signal features",
+    "chat_error": "Chat error",
+    "chat_disclaimer": "AI explanations are educational only — clinical judgment remains yours."
   },
   "alerts": {
     "title": "Alerts",
@@ -210,5 +224,31 @@
     "loading": "Loading...",
     "saving": "Saving...",
     "updating": "Updating..."
+  },
+  "devices": {
+    "title": "ECG Device Management",
+    "subtitle": "Connect and manage ECG recording hardware",
+    "preview_mode_banner_title": "PREVIEW MODE",
+    "preview_mode_banner": "This page shows the device integration architecture and proves the app is ready to receive compatible ECG hardware once physical drivers are available. The system currently uses a built-in ECG simulator that feeds the same analysis pipeline a real device would.",
+    "status_title": "Device Status",
+    "no_hardware": "No hardware connected",
+    "active_source": "Active Source",
+    "active_source_badge": "Simulator (built-in)",
+    "sample_rate": "Sample Rate",
+    "standard_compliance": "Standard Compliance",
+    "supported_devices_title": "Supported Devices",
+    "awaiting_hardware": "Awaiting hardware",
+    "requires_hardware": "Requires hardware",
+    "abstraction_layer_title": "Device Abstraction Layer",
+    "abstraction_explanation": "This section confirms that the app already has a device abstraction layer in place. A simulator is used for now to prove the same signal path is ready for real ECG hardware, so once compatible drivers are available, the device can be connected without changing the analysis pipeline, database, or UI.",
+    "simulator_actions_title": "Simulator Actions",
+    "simulator_actions_description": "Test the analysis pipeline with synthetic ECG signals.",
+    "simulator_actions_placeholder": "Simulator actions available in future release",
+    "generate_test_ecg": "Generate Test ECG",
+    "select_rhythm_prompt": "Select a rhythm type to generate a simulated ECG signal and test the analysis pipeline:",
+    "rhythm_normal": "Normal Rhythm",
+    "rhythm_afib": "Atrial Fibrillation",
+    "rhythm_pvc": "Premature Ventricular Contraction",
+    "rhythm_brady": "Bradycardia"
   }
 }

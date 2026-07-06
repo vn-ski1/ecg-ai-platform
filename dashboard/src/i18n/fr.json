@@ -5,7 +5,8 @@
     "home": "Accueil",
     "settings": "Paramètres",
     "logout": "Déconnexion",
-    "back_home": "← Retour à l'accueil"
+    "back_home": "← Retour à l'accueil",
+    "devices": "Dispositifs"
   },
   "header": {
     "doctor_dashboard": "ECG AI Platform — Tableau de bord Médecin",
@@ -136,7 +137,20 @@
     "heart_rate": "Fréquence cardiaque",
     "cvd_risk": "Risque CVD",
     "ecg_waveform": "Forme d'onde ECG",
-    "waveform_caption": "360 échantillons · fréquence d'échantillonnage 360 Hz · fenêtre de battement style MIT-BIH"
+    "waveform_caption": "360 échantillons · fréquence d'échantillonnage 360 Hz · fenêtre de battement style MIT-BIH",
+    "chat_title": "Interroger l'IA sur cet ECG",
+    "chat_open": "Interroger l'IA →",
+    "chat_collapse": "Fermer",
+    "chat_suggestions": "Questions suggérées :",
+    "chat_q1": "Pourquoi ce rythme a-t-il été classifié comme \"{{rhythm}}\" ?",
+    "chat_q2": "Que signifie un score de risque CVD de {{score}}/100 ?",
+    "chat_q3": "Une fréquence cardiaque de {{bpm}} BPM est-elle normale ?",
+    "chat_q4": "Quelles sont les implications cliniques de ce résultat ?",
+    "chat_placeholder": "Posez une question sur cette analyse ECG...",
+    "chat_send": "Envoyer",
+    "chat_features": "Caractéristiques du signal",
+    "chat_error": "Erreur de chat",
+    "chat_disclaimer": "Les explications de l'IA sont uniquement éducatives — le jugement clinique reste le vôtre."
   },
   "alerts": {
     "title": "Alertes",
@@ -210,5 +224,31 @@
     "loading": "Chargement...",
     "saving": "Enregistrement...",
     "updating": "Mise à jour..."
+  },
+  "devices": {
+    "title": "Gestion des Dispositifs ECG",
+    "subtitle": "Connecter et gérer le matériel d'enregistrement ECG",
+    "preview_mode_banner_title": "MODE APERÇU",
+    "preview_mode_banner": "Cette page montre l'architecture d'intégration des appareils et prouve que l'application est prête à recevoir du matériel ECG compatible dès que des pilotes physiques seront disponibles. Le système utilise actuellement un simulateur ECG intégré qui alimente le même pipeline d'analyse qu'un appareil réel.",
+    "status_title": "État du Dispositif",
+    "no_hardware": "Aucun matériel connecté",
+    "active_source": "Source Active",
+    "active_source_badge": "Simulateur (intégré)",
+    "sample_rate": "Fréquence d'Échantillonnage",
+    "standard_compliance": "Conformité aux Normes",
+    "supported_devices_title": "Appareils Supportés",
+    "awaiting_hardware": "Matériel en attente",
+    "requires_hardware": "Nécessite matériel",
+    "abstraction_layer_title": "Couche d'Abstraction des Appareils",
+    "abstraction_explanation": "Cette section confirme que l'application dispose déjà d'une couche d'abstraction d'appareil. Un simulateur est utilisé pour l'instant afin de prouver que le même flux de signal est prêt pour du matériel ECG réel, de sorte que dès que des pilotes compatibles sont disponibles, l'appareil peut être connecté sans modifier le pipeline d'analyse, la base de données ou l'interface.",
+    "simulator_actions_title": "Actions du Simulateur",
+    "simulator_actions_description": "Testez le pipeline d'analyse avec des signaux ECG synthétiques.",
+    "simulator_actions_placeholder": "Actions du simulateur disponibles dans une version future",
+    "generate_test_ecg": "Générer ECG de Test",
+    "select_rhythm_prompt": "Sélectionnez un type de rythme pour générer un signal ECG simulé et tester le pipeline d'analyse :",
+    "rhythm_normal": "Rythme Normal",
+    "rhythm_afib": "Fibrillation Auriculaire",
+    "rhythm_pvc": "Contraction Ventriculaire Prématurée",
+    "rhythm_brady": "Bradycardie"
   }
 }
