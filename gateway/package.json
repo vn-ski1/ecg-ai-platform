@@ -10,6 +10,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.109.1",
+    "@google/genai": "^2.10.0",
     "axios": "^1.18.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",

@@ -330,4 +330,66 @@ router.post('/claim-patient/:id', authenticateDoctor, async (req, res) => {
   }
 });
 
+// POST /api/v1/ecg/records/:recordId/chat — AI chat about a specific ECG record
+router.post('/records/:recordId/chat', authenticateDoctor, async (req, res) => {
+  const recordId = parseInt(req.params.recordId, 10);
+  if (isNaN(recordId)) {
+    return res.status(400).json({ error: 'Invalid record ID' });
+  }
+
+  const { question, history } = req.body;
+  if (!question || !question.trim()) {
+    return res.status(400).json({ error: 'question is required' });
+  }
+
+  try {
+    // Enforce doctor ownership: only the assigned doctor can chat about this record
+    const recordResult = await pool.query(
+      `SELECT r.record_id, r.recorded_at, r.rhythm_class, r.confidence, r.bpm,
+              r.cvd_risk_score, r.cvd_risk_category, r.signal_data,
+              p.name AS patient_name, p.date_of_birth, p.gender
+       FROM ecg_records r
+       JOIN patients p ON p.patient_id = r.patient_id
+       WHERE r.record_id = $1
+         AND p.assigned_doctor_id = $2`,
+      [recordId, req.doctor.doctor_id]
+    );
+
+    if (recordResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Record not found or you are not the assigned doctor' });
+    }
+
+    const row = recordResult.rows[0];
+    const ecgContext = {
+      patient: {
+        name: row.patient_name,
+        date_of_birth: row.date_of_birth,
+        gender: row.gender,
+      },
+      ecg: {
+        record_id: row.record_id,
+        recorded_at: row.recorded_at,
+        rhythm_class: row.rhythm_class,
+        confidence: row.confidence,
+        bpm: row.bpm,
+        cvd_risk_score: row.cvd_risk_score,
+        cvd_risk_category: row.cvd_risk_category,
+        signal_data: typeof row.signal_data === 'string' ? JSON.parse(row.signal_data) : row.signal_data,
+      },
+    };
+
+    const { askAboutECG } = require('../services/aiChatService');
+    const result = await askAboutECG(ecgContext, question.trim(), Array.isArray(history) ? history : []);
+
+    if (result.error) {
+      return res.status(503).json({ error: result.error, detail: result.detail });
+    }
+
+    res.json({ reply: result.reply, computed_features: result.computed_features });
+  } catch (err) {
+    console.error('POST /records/:id/chat error:', err.message);
+    res.status(500).json({ error: 'Chat request failed', detail: err.message });
+  }
+});
+
 module.exports = router;
